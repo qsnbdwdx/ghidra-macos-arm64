@@ -60,7 +60,7 @@ Neither needs binutils.
 
 ---
 
-## 3. Trap #2 — the Makefile hardcodes x86_64
+## 3. Trap #2 — the Makefile hardcodes x86_64 (but you don't edit it)
 
 In the upstream `Makefile`, the Darwin branch reads:
 
@@ -73,45 +73,29 @@ ifeq ($(OS),Darwin)
 endif
 ```
 
-On Apple Silicon this produces an **Intel** binary and installs it under `mac_x86_64/` — where Ghidra on arm64 will never look.
-
-Patch it:
-
-```makefile
-ifeq ($(OS),Darwin)
-  MAKE_STATIC=
-  ARCH_TYPE=-arch arm64
-  ADDITIONAL_FLAGS=-mmacosx-version-min=11.0 -w
-  OSDIR=mac_arm_64
-endif
-```
-
-Note `-mmacosx-version-min=10.6` is invalid for arm64; use `11.0`.
-
-Apply it in one shot:
+**Leave that file alone.** Make's command-line variables take precedence over
+in-file assignments (these use `=`, not `override`), so you just pass the two
+values on the command line:
 
 ```bash
-cp Makefile Makefile.bak
-python3 - <<'PY'
-p = 'Makefile'
-s = open(p).read()
-old = """ifeq ($(OS),Darwin)
-  MAKE_STATIC=
-  ARCH_TYPE=-arch x86_64
-  ADDITIONAL_FLAGS=-mmacosx-version-min=10.6 -w
-  OSDIR=mac_x86_64
-endif"""
-new = """ifeq ($(OS),Darwin)
-  MAKE_STATIC=
-  ARCH_TYPE=-arch arm64
-  ADDITIONAL_FLAGS=-mmacosx-version-min=11.0 -w
-  OSDIR=mac_arm_64
-endif"""
-assert old in s, "Darwin block not found — upstream Makefile changed"
-open(p, 'w').write(s.replace(old, new))
-print("patched")
-PY
+make ghidra_opt ARCH_TYPE="-arch arm64" OSDIR=mac_arm_64
+make sleigh_opt ARCH_TYPE="-arch arm64" OSDIR=mac_arm_64
 ```
+
+That is the whole fix. No patching, no `sed`, nothing to revert.
+
+The `-mmacosx-version-min=10.6` flag is inherited and left as-is; Apple clang 17
+accepts it when targeting arm64 in this build. If your toolchain rejects it,
+add it to the override:
+
+```bash
+make ghidra_opt ARCH_TYPE="-arch arm64" OSDIR=mac_arm_64 \
+     ADDITIONAL_FLAGS="-mmacosx-version-min=11.0 -w"
+```
+
+> **Note on reproducibility:** the binaries in `bin/` were produced with these
+> exact overrides. Rebuilding them yields a byte-identical `ghidra_opt`
+> (SHA256 `e31bc935…6fb54`), so you can verify without trusting us.
 
 ---
 
