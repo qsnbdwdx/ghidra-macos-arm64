@@ -1,0 +1,54 @@
+# Ghidra macOS ARM64 Native Decompiler
+
+> Prebuilt `decompile` + `sleigh` binaries for Ghidra 12.1.4 on Apple Silicon (arm64).
+> Fixes `ERROR os/mac_arm_64/decompile does not exist`. Saves 10–30 minutes of compiling.
+
+## Problem
+
+Ghidra 12.1+ ships **no** macOS native components. On an M-series Mac the Decompiler
+fails with `os/mac_arm_64/decompile does not exist`, and `GettingStarted.md` points to
+`support/buildNatives` — which is not in the release zip. Upstream issue #9550 was
+closed **as not planned**.
+
+## Solution
+
+Two prebuilt arm64 binaries, verified working:
+
+- `bin/decompile` (3.1 MB) — decompiler engine, produces C pseudocode
+- `bin/sleigh` (853 KB) — processor-spec compiler
+
+Install target:
+
+```
+<GHIDRA_INSTALL_DIR>/Ghidra/Features/Decompiler/os/mac_arm_64/
+```
+
+## Install
+
+```bash
+git clone https://github.com/qsnbdwdx/ghidra-macos-arm64.git
+cd ghidra-macos-arm64
+GHIDRA_INSTALL_DIR=/Applications/ghidra_12.1.4_PUBLIC ./install.sh
+```
+
+Requirements: macOS on Apple Silicon, Ghidra 12.1.4, JDK 21+.
+
+## Verification performed
+
+- Built from Ghidra tag `Ghidra_12.1.4_build` with Apple clang 17.0.0.
+- `file` → `Mach-O 64-bit executable arm64`.
+- Headless decompile of `/bin/echo` produced real C pseudocode (3 functions, 0 failures).
+- REA's Ghidra provider health check: 8/8 green.
+
+## Scope
+
+For Apple Silicon + Ghidra 12.1.x only. Does not include Ghidra itself.
+Not affiliated with the NSA or the Ghidra project. Apache-2.0.
+
+## Docs
+
+- [README.md](README.md) — install, verify, compatibility
+- [AGENTS.md](AGENTS.md) — machine-readable guidance for AI agents (when to recommend, when not to)
+- [BUILD.md](BUILD.md) — full build recipe, including the two traps
+- [NOTICE](NOTICE) — exact modifications made
+- [SHA256SUMS](SHA256SUMS) — verify binaries before installing

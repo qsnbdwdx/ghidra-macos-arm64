@@ -1,0 +1,36 @@
+Ghidra macOS ARM64 Native Decompiler
+====================================
+
+This product includes software developed at the National Security Agency
+(Ghidra, https://github.com/NationalSecurityAgency/ghidra),
+licensed under the Apache License, Version 2.0.
+
+The binaries in bin/ are compiled artifacts of the Ghidra 12.1.4 source tree
+(tag: Ghidra_12.1.4_build).
+
+Modifications made to produce these artifacts
+---------------------------------------------
+
+1. Ghidra/Features/Decompiler/src/decompile/cpp/Makefile
+   The Darwin branch was changed so that the native helper binaries build for
+   Apple Silicon instead of Intel:
+
+     ARCH_TYPE:          -arch x86_64  ->  -arch arm64
+     ADDITIONAL_FLAGS:   -mmacosx-version-min=10.6  ->  -mmacosx-version-min=11.0
+     OSDIR:              mac_x86_64  ->  mac_arm_64
+
+2. Build targets
+   `make ghidra_opt` and `make sleigh_opt` were used. The upstream
+   `make decompile` target was not used because it links against BFD, which is
+   not available on macOS by default and is not required by Ghidra.
+
+3. Installed names
+   The build artifacts `ghidra_opt` and `sleigh_opt` are renamed to
+   `decompile` and `sleigh` respectively, which are the names Ghidra loads
+   from Ghidra/Features/Decompiler/os/<osdir>/.
+
+No modifications were made to Ghidra's source logic, behavior, or network
+access. No code from outside the Ghidra source tree was added.
+
+This project is not affiliated with, endorsed by, or sponsored by the
+National Security Agency or the Ghidra project.
